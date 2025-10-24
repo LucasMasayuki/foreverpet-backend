@@ -1,0 +1,141 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Laravel ERP - Cursor Rules
+
+You are an expert in Laravel, PHP, and related web development technologies.
+
+## Key Principles
+- Write concise, technical responses with accurate PHP examples.
+- Follow Laravel best practices and conventions.
+- Use object-oriented programming with a focus on SOLID principles.
+- Prefer iteration and modularization over duplication.
+- Use descriptive variable and method names.
+- Use lowercase with dashes for directories (e.g., app/Http/Controllers).
+- Favor dependency injection and service containers.
+
+## Scope
+Apply to: All `*.php` files in the project (exclude vendor and node_modules)
+
+## Stack & Environment
+- **Laravel**: 10.x | **PHP**: 8.3+ | **Spatie Data**: 3.11+ | **Passport**: 11.x
+- **Docker**: `php-erp` container | **DB**: PostgreSQL | **Cache**: Redis
+- **Tools**: PHPStan (Larastan 2.x), Paratest, Xdebug
+
+## PHP/Laravel Standards
+- Use PHP 8.1+ features when appropriate (e.g., typed properties, match expressions).
+- Follow PSR-12 coding standards.
+- **DO NOT** use `declare(strict_types=1);` in PHP files.
+- Utilize Laravel's built-in features and helpers when possible.
+- File structure: Follow Laravel's directory structure and naming conventions.
+- Implement proper error handling and logging:
+  - Use Laravel's exception handling and logging features.
+  - Create custom exceptions when necessary.
+  - Use try-catch blocks for expected exceptions.
+- Use Laravel's validation features for form and request validation.
+- Implement middleware for request filtering and modification.
+- Utilize Laravel's Eloquent ORM for database interactions.
+- Use Laravel's query builder for complex database queries.
+- Implement proper database migrations and seeders.
+
+## Dependencies
+- Laravel (latest stable version)
+- Composer for dependency management
+
+## Laravel Best Practices
+- Use Eloquent ORM instead of raw SQL queries when possible.
+- Implement Repository pattern for data access layer.
+- Use Laravel's built-in authentication and authorization features.
+- Utilize Laravel's caching mechanisms for improved performance.
+- Implement job queues for long-running tasks.
+- Use Laravel's built-in testing tools (PHPUnit, Dusk) for unit and feature tests.
+- Implement API versioning for public APIs.
+- Use Laravel's localization features for multi-language support.
+- Implement proper CSRF protection and security measures.
+- Use Laravel Mix for asset compilation.
+- Implement proper database indexing for improved query performance.
+- Use Laravel's built-in pagination features.
+- Implement proper error logging and monitoring.
+
+## Key Conventions
+1. Follow Laravel's MVC architecture.
+2. Use Laravel's routing system for defining application endpoints.
+3. Implement proper request validation using Form Requests.
+4. Use Laravel's Blade templating engine for views.
+5. Implement proper database relationships using Eloquent.
+6. Use Laravel's built-in authentication scaffolding.
+7. Implement proper API resource transformations.
+8. Use Laravel's event and listener system for decoupled code.
+9. Implement proper database transactions for data integrity.
+10. Use Laravel's built-in scheduling features for recurring tasks.
+
+## Factory Usage in Unit Tests
+- **Always use factories** from `database/factories/` for creating test data in unit tests
+- **Factory Structure**: All factories extend `Illuminate\Database\Eloquent\Factories\Factory`
+- **Factory Location**: Located in `database/factories/` with proper namespace `Database\Factories`
+- **Factory Naming**: Follow `{ModelName}Factory.php` convention
+
+## Resources Best Pratice
+- Resource always return data in snake_case
+
+### Factory Best Practices:
+- Use `Model::factory()` method to create instances in tests
+- Leverage factory states and methods like `forCurrentCompany()`, `forCompany()`
+- Use `create()` for persisted models, `make()` for non-persisted instances
+- Use `count()` for creating multiple instances: `User::factory()->count(5)->create()`
+- Override specific attributes when needed: `User::factory()->create(['email' => 'test@example.com'])`
+- Use `hasAttached()` for relationship factories when available
+- Prefer factory relationships over manual foreign key assignment
+
+### Factory Usage Examples:
+```php
+// Basic factory usage
+$user = User::factory()->create();
+$product = Product::factory()->make();
+
+// With specific attributes
+$user = User::factory()->create(['name' => 'John Doe']);
+
+// Multiple instances
+$users = User::factory()->count(3)->create();
+
+// Using custom factory methods
+$product = Product::factory()->forCurrentCompany()->create();
+$user = User::factory()->forCurrentCompany()->create();
+
+// Factory with relationships
+$company = Company::factory()->create();
+$user = User::factory()->forCompany($company)->create();
+```
+
+### Testing Guidelines:
+- Use factories for **all** model creation in tests
+- Create minimal required data for each test case
+- Use `DatabaseTransactions` trait for test isolation
+- Group related factory calls for better test organization
+- Use descriptive variable names for factory-created models
+
+## Docker Commands
+- **Shell**: `docker exec -it php-erp bash`
+- **PHPStan**: `docker exec php-erp vendor/bin/phpstan analyse`
+- **Paratest**: `docker exec php-erp vendor/bin/paratest`
+- **Artisan**: `docker exec php-erp php artisan {command}`
+- **Composer**: `docker exec php-erp composer {command}`
+
+## Module Creation Steps
+1. **Structure**: Create folder structure in `app/Api/Modules/{Module}/`
+2. **Templates**: Copy templates above, replace `{Entity}` placeholders
+3. **Business Rules**: Add specific validation and business logic
+4. **Relations**: Implement Services for complex operations
+5. **Events**: Add Events/Listeners if needed
+6. **Tests**: Write unit/feature tests using appropriate factories
+
+## Project-Specific Best Practices
+- **Transactions**: Use for complex operations with multiple models
+- **Events**: Dispatch after successful operations for decoupling
+- **Validation**: Custom logic in Data constructors, rules in `rules()` method
+- **Queries**: Use `when()` for conditional filters, eager load relations
+- **Resources**: Use `whenLoaded()` for optional relations
+- **Exceptions**: Implement `CustomApiException` for API errors

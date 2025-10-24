@@ -1,0 +1,374 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Module Creation Template - Generic Rules
+
+## Rule Scope
+**Apply these rules only to:**
+- **File Pattern**: `*.php`
+- **Directory**: `app/Api/**`
+- **Exclude**: `app/Api/Support/Tests/**`, `*.blade.php`
+
+## Quick Module Setup Guide
+
+### 1. Create Module Structure
+```
+app/Api/Modules/{ModuleName}/
+├── Controllers/
+├── Data/
+├── UseCases/
+├── Repositories/
+├── Resource/
+├── Enums/
+├── Services/
+├── Events/
+├── Listeners/
+├── Exceptions/
+├── Traits/
+├── Rules/
+└── Tests/
+```
+
+### 2. Essential Files to Create
+
+#### Controller Template
+```php
+<?php
+
+namespace App\Api\Modules\{ModuleName}\Controllers;
+
+use App\Api\Modules\Common\Controllers\ApiBaseController;
+use App\Api\Modules\{ModuleName}\Data\{Entity}Data;
+use App\Api\Modules\{ModuleName}\Data\{Entity}QueryData;
+use App\Api\Modules\{ModuleName}\Data\{Entities}QueryData;
+use App\Api\Modules\{ModuleName}\Resource\{Entity}Resource;
+use App\Api\Modules\{ModuleName}\Resource\{Entities}Resource;
+use App\Api\Modules\{ModuleName}\UseCases\Create{Entity}UseCase;
+use App\Api\Modules\{ModuleName}\UseCases\Delete{Entity}UseCase;
+use App\Api\Modules\{ModuleName}\UseCases\GetAll{Entities}UseCase;
+use App\Api\Modules\{ModuleName}\UseCases\Get{Entity}UseCase;
+use App\Api\Modules\{ModuleName}\UseCases\Update{Entity}UseCase;
+use Symfony\Component\HttpFoundation\Response;
+
+class {Entities}Controller extends ApiBaseController
+{
+    public function index({Entities}QueryData $query, GetAll{Entities}UseCase $useCase): {Entities}Resource
+    {
+        $items = $useCase->execute($query);
+        return new {Entities}Resource($items);
+    }
+
+    public function store({Entity}Data $data, Create{Entity}UseCase $useCase): {Entity}Resource
+    {
+        $item = $useCase->execute($data);
+        return new {Entity}Resource($item);
+    }
+
+    public function show({Entity}QueryData $data, Get{Entity}UseCase $useCase): {Entity}Resource
+    {
+        $item = $useCase->execute($data);
+        return new {Entity}Resource($item);
+    }
+
+    public function update({Entity}Data $data, Update{Entity}UseCase $useCase): {Entity}Resource
+    {
+        $item = $useCase->execute($data);
+        return new {Entity}Resource($item);
+    }
+
+    public function destroy({Entity}QueryData $data, Delete{Entity}UseCase $useCase): \Illuminate\Http\JsonResponse
+    {
+        $useCase->execute($data);
+        return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
+}
+```
+
+#### Data Object Template
+```php
+<?php
+
+namespace App\Api\Modules\{ModuleName}\Data;
+
+use App\Api\Support\Enums\SessionEnum;
+use App\Api\Support\Rules\CompanyByUser;
+use App\Models\Company;
+use Illuminate\Validation\Rule;
+use Spatie\LaravelData\Attributes\FromRouteParameter;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Attributes\MapOutputName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use Spatie\LaravelData\Optional;
+
+#[MapName(SnakeCaseMapper::class)]
+class {Entity}Data extends Data
+{
+    public function __construct(
+        #[FromRouteParameter('{entityId}')]
+        public int|Optional $id,
+        public string $name,
+        // Add other fields here
+        public ?int $companyId = null,
+    ) {
+        $this->companyId ??= session(SessionEnum::CompanySelected->value);
+    }
+
+    public static function rules(): array
+    {
+        return [
+            'id' => ['integer', Rule::exists(app({Entity}::class)->getTableWithConnection(), 'id')],
+            'name' => ['required', 'string', 'max:255'],
+            'company_id' => [
+                'integer',
+                'between:1,2147483647',
+                Rule::exists(app(Company::class)->getTableWithConnection(), 'id'),
+                new CompanyByUser,
+            ],
+        ];
+    }
+}
+```
+
+#### Query Data Template
+```php
+<?php
+
+namespace App\Api\Modules\{ModuleName}\Data;
+
+use App\Api\Modules\Common\Enums\DeletedEnum;
+use App\Api\Support\Data\CarbonImmutableCast;
+use App\Api\Support\Enums\SessionEnum;
+use Carbon\CarbonImmutable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Attributes\Validation\Max;
+use Spatie\LaravelData\Attributes\Validation\Min;
+use Spatie\LaravelData\Attributes\WithCast;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+
+#[MapName(SnakeCaseMapper::class)]
+class {Entities}QueryData extends Data
+{
+    public function __construct(
+        public ?string $name = null,
+        #[Min(1)]
+        public ?int $page = null,
+        #[Min(1), Max(100)]
+        public ?int $perPage = null,
+        #[WithCast(CarbonImmutableCast::class, format: DATE_ATOM)]
+        public ?CarbonImmutable $updatedFrom = null,
+        public ?DeletedEnum $deleted = null,
+        public ?int $companyId = null,
+    ) {
+        $this->page ??= 1;
+        $this->perPage ??= config('pagination.api_v3_per_page');
+        $this->deleted ??= DeletedEnum::NotInclude;
+        $this->companyId ??= session(SessionEnum::CompanySelected->value);
+    }
+}
+```
+
+#### UseCase Template
+```php
+<?php
+
+namespace App\Api\Modules\{ModuleName}\UseCases;
+
+use App\Api\Modules\{ModuleName}\Data\{Entity}Data;
+use App\Api\Modules\{ModuleName}\Repositories\{Entities}Repository;
+use App\Models\{Entity};
+
+class Create{Entity}UseCase
+{
+    public function __construct(
+        private readonly {Entities}Repository $repository
+    ) {}
+
+    public function execute({Entity}Data $data): {Entity}
+    {
+        return $this->repository->create($data);
+    }
+}
+```
+
+#### Repository Template
+```php
+<?php
+
+namespace App\Api\Modules\{ModuleName}\Repositories;
+
+use App\Api\Modules\{ModuleName}\Data\{Entity}Data;
+use App\Api\Modules\{ModuleName}\Data\{Entities}QueryData;
+use App\Api\Support\Contracts\RepositoryContract;
+use App\Api\Support\Repository\BaseRepository;
+use App\Models\{Entity};
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+class {Entities}Repository BaseRepository implements RepositoryContract
+{
+    public function __construct(
+        private readonly {Entity} $model
+    ) {}
+
+    public function getAll({Entities}QueryData $query): LengthAwarePaginator
+    {
+        return $this->model
+            ->when($query->name, fn($q) => $q->where('name', 'like', "%{$query->name}%"))
+            ->when($query->companyId, fn($q) => $q->where('company_id', $query->companyId))
+            ->when($query->deleted === DeletedEnum::OnlyDeleted, fn($q) => $q->onlyTrashed())
+            ->when($query->deleted === DeletedEnum::WithDeleted, fn($q) => $q->withTrashed())
+            ->when($query->updatedFrom, fn($q) => $q->where('updated_at', '>=', $query->updatedFrom))
+            ->orderBy('created_at', 'desc')
+            ->paginate($query->perPage);
+    }
+
+    public function find(int $id): {Entity}
+    {
+        return $this->model->findOrFail($id);
+    }
+
+    public function create({Entity}Data $data): {Entity}
+    {
+        return $this->model->create($data->toArray());
+    }
+
+    public function update({Entity} $entity, {Entity}Data $data): {Entity}
+    {
+        $entity->update($data->toArray());
+        return $entity->refresh();
+    }
+
+    public function delete({Entity} $entity): bool
+    {
+        return $entity->delete();
+    }
+}
+```
+
+#### Resource Template
+```php
+<?php
+
+namespace App\Api\Modules\{ModuleName}\Resource;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class {Entity}Resource extends JsonResource
+{
+    public function toArray($request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            // Add other fields here
+        ];
+    }
+}
+```
+
+#### Collection Resource Template
+```php
+<?php
+
+namespace App\Api\Modules\{ModuleName}\Resource;
+
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class {Entities}Resource extends ResourceCollection
+{
+    public $collects = {Entity}Resource::class;
+}
+```
+
+## Module Creation Checklist
+
+### Phase 1: Basic Structure
+- [ ] Create module directory structure
+- [ ] Create basic Controller with CRUD operations
+- [ ] Create Data objects (Entity + Query)
+- [ ] Create basic UseCases (Create, Read, Update, Delete)
+- [ ] Create Repository with basic queries
+- [ ] Create Resources (single + collection)
+
+### Phase 2: Business Logic
+- [ ] Add specific business rules to Data objects
+- [ ] Implement complex queries in Repository
+- [ ] Add validation rules and custom logic
+- [ ] Create Enums for domain values
+- [ ] Add Services for complex operations
+
+### Phase 3: Advanced Features
+- [ ] Add Events and Listeners if needed
+- [ ] Create custom Exceptions
+- [ ] Add Traits for shared functionality
+- [ ] Implement file upload if needed
+- [ ] Add bulk operations if required
+
+### Phase 4: Testing
+- [ ] Create unit tests for UseCases
+- [ ] Create feature tests for Controllers
+- [ ] Test validation rules
+- [ ] Test repository queries
+
+## Common Patterns to Follow
+
+### Naming Conventions
+- **Entity**: Singular (e.g., `Product`, `Customer`)
+- **Collection**: Plural (e.g., `Products`, `Customers`)
+- **Files**: Follow the pattern `{Entity}Controller`, `{Entity}Data`, etc.
+
+### Standard Fields
+Most entities should have:
+- `id` (primary key)
+- `name` (descriptive name)
+- `company_id` (company association)
+- `created_at`, `updated_at` (timestamps)
+- `deleted_at` (soft deletes)
+
+### Validation Patterns
+- Always validate `company_id` with `CompanyByUser` rule
+- Use `Rule::exists()` for foreign keys
+- Apply `between:1,2147483647` for integer IDs
+- Use `max:255` for string fields
+
+### Query Patterns
+- Always include pagination (`page`, `perPage`)
+- Support filtering by `name`, `company_id`
+- Include `updatedFrom` for incremental sync
+- Handle soft deletes with `DeletedEnum`
+
+### Repository Patterns
+- Use `when()` for conditional queries
+- Apply company scoping
+- Use `findOrFail()` for single records
+- Return proper types (Model, Collection, Paginator)
+
+## Quick Replace Guide
+When creating a new module, replace these placeholders:
+- `{ModuleName}` → Your module name (e.g., `Customer`)
+- `{Entity}` → Singular entity name (e.g., `Customer`)
+- `{Entities}` → Plural entity name (e.g., `Customers`)
+- `{entityId}` → Route parameter name (e.g., `customerId`)
+
+## Example: Creating Customer Module
+```bash
+# Replace patterns:
+{ModuleName} → Customer
+{Entity} → Customer
+{Entities} → Customers
+{entityId} → customerId
+```
+
+This creates:
+- `CustomersController`
+- `CustomerData`, `CustomersQueryData`
+- `CreateCustomerUseCase`, `GetAllCustomersUseCase`, etc.
+- `CustomersRepository`
+- `CustomerResource`, `CustomersResource`
+
+## Module Template
