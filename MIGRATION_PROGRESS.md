@@ -266,6 +266,55 @@ POST   /rest/Users/CreateSignedUploadUrl  # S3 upload
 
 ---
 
+### 🗂️ Fase 4.4: Integração AWS S3 ✅
+
+**Status**: ✅ Completo
+
+#### 📦 Arquivos Criados
+1. **Contracts**
+   - `app/Api/Support/Contracts/StorageServiceInterface.php` - Interface para serviços de storage
+
+2. **Services**
+   - `app/Api/Support/Services/S3StorageService.php` - Implementação AWS S3
+   - `app/Api/Support/Services/LocalStorageService.php` - Implementação local (dev)
+
+3. **Provider**
+   - `app/Providers/StorageServiceProvider.php` - Service Provider
+
+4. **Module User**
+   - `app/Api/Modules/User/Data/CreateSignedUploadUrlData.php` - DTO
+   - `app/Api/Modules/User/UseCases/CreateSignedUploadUrlUseCase.php` - Use Case
+
+#### 🔧 Arquivos Modificados
+1. `bootstrap/providers.php` - Registrou StorageServiceProvider
+2. `config/services.php` - Adicionou configuração de storage
+3. `app/Api/Modules/User/Controllers/UserProfileController.php` - Implementou endpoint
+
+#### ✨ Funcionalidades
+- ✅ Signed URLs para upload direto ao S3
+- ✅ Suporte para múltiplos drivers (S3, Local)
+- ✅ Organização automática de arquivos por tipo e usuário
+- ✅ Validação de extensões e diretórios
+- ✅ Segurança com URLs expiráveis (60 minutos)
+- ✅ Logs completos de operações
+
+#### 📂 Estrutura de Pastas
+```
+uploads/users/{userId}/
+├── profile/              # Fotos de perfil
+├── pets/{year}/{month}/  # Fotos de pets
+├── documents/...         # Documentos
+├── exams/...            # Exames
+└── prescriptions/...    # Receitas
+```
+
+#### 🚀 Endpoint
+- `POST /api/v1/rest/Users/CreateSignedUploadUrl` - Gera URL assinada para upload
+
+#### 📚 Documentação
+- `S3_STORAGE_GUIDE.md` - Guia completo de uso
+- `S3_IMPLEMENTATION_SUMMARY.md` - Resumo da implementação
+
 ---
 
 ## 🎯 Próximos Passos Prioritários

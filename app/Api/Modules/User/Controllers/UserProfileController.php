@@ -3,11 +3,13 @@
 namespace App\Api\Modules\User\Controllers;
 
 use App\Api\Http\Controllers\ApiBaseController;
+use App\Api\Modules\User\Data\CreateSignedUploadUrlData;
 use App\Api\Modules\User\Data\UserDeviceData;
 use App\Api\Modules\User\Data\UserQRCodeScanData;
 use App\Api\Modules\User\Data\UserUpdateData;
 use App\Api\Modules\User\Resource\UserBasicResource;
 use App\Api\Modules\User\Resource\UserProfileResource;
+use App\Api\Modules\User\UseCases\CreateSignedUploadUrlUseCase;
 use App\Api\Modules\User\UseCases\GetUserProfileUseCase;
 use App\Api\Modules\User\UseCases\ScanQRCodeUseCase;
 use App\Api\Modules\User\UseCases\UpdateUserDeviceUseCase;
@@ -68,16 +70,15 @@ class UserProfileController extends ApiBaseController
     }
 
     /**
-     * POST /rest/Users/CreateSignedUploadUrl - Create signed S3 URL
+     * POST /rest/Users/CreateSignedUploadUrl - Create signed upload URL
      */
-    public function createSignedUploadUrl(string $extension, string $remoteDir): JsonResponse
-    {
-        // TODO: Implement S3 signed URL generation
-        // This requires AWS S3 integration
+    public function createSignedUploadUrl(
+        CreateSignedUploadUrlData $data,
+        CreateSignedUploadUrlUseCase $useCase
+    ): JsonResponse {
+        $result = $useCase->execute($data);
 
-        return response()->json([
-            'message' => 'S3 upload URL - to be implemented',
-        ]);
+        return response()->json($result);
     }
 }
 
