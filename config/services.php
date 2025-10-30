@@ -52,4 +52,17 @@ return [
         'from_number' => env('TWILIO_FROM_NUMBER'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Service Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'email' => [
+        'from' => [
+            'address' => env('MAIL_FROM_ADDRESS', 'noreply@foreverpet.com'),
+            'name' => env('MAIL_FROM_NAME', 'ForeverPet'),
+        ],
+    ],
+
 ];

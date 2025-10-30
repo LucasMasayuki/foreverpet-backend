@@ -5,7 +5,9 @@ namespace App\Api\Modules\User\UseCases;
 use App\Api\Modules\User\Data\UserPasswordResetData;
 use App\Api\Modules\User\Repositories\UsersRepository;
 use App\Api\Support\Exceptions\NotFoundException;
+use App\Mail\PasswordResetMail;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 
 class ResetPasswordUseCase
 {
@@ -29,8 +31,13 @@ class ResetPasswordUseCase
         $user->last_update_at = now();
         $user->save();
 
-        // TODO: Dispatch SendPasswordResetEmailJob
-        // dispatch(new SendPasswordResetEmailJob($user, $token));
+        // Generate reset URL
+        $resetUrl = config('app.frontend_url') . '/reset-password?token=' . urlencode($token);
+
+        // Send password reset email
+        Mail::to($user->email)->send(
+            new PasswordResetMail($user->name, $resetUrl)
+        );
     }
 
     private function generateToken(string $email): string

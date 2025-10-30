@@ -4,7 +4,9 @@ namespace App\Api\Modules\User\UseCases;
 
 use App\Api\Modules\User\Data\UserChallengeData;
 use App\Api\Modules\User\Repositories\UsersRepository;
+use App\Mail\ChallengeCodeMail;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 
 class SendEmailChallengeUseCase
 {
@@ -28,11 +30,12 @@ class SendEmailChallengeUseCase
         $user->email_challenge_code_sent_at = now();
         $user->save();
 
-        // Send email
-        if ($user->email !== 'dev@foreverpet.com') {
-            // TODO: Send email with template
-            // Mail::send('mail_user_challenge', ['Nome' => $user->name, 'Code' => $code], ...);
-        }
+        // Send email with challenge code
+        $purpose = $data->type === 1 ? 'fazer login' : 'verificar sua conta';
+
+        Mail::to($user->email)->send(
+            new ChallengeCodeMail($user->name, $code, $purpose)
+        );
 
         // Encrypt challenge
         $challenge = Crypt::encryptString($code . '|' . $data->email);

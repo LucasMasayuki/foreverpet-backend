@@ -5,8 +5,11 @@ namespace App\Api\Modules\User\UseCases;
 use App\Api\Modules\User\Data\UserRegisterData;
 use App\Api\Modules\User\Repositories\UsersRepository;
 use App\Api\Support\Exceptions\ValidationException;
+use App\Mail\VerificationMail;
 use App\Models\User;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class RegisterUserUseCase
@@ -37,8 +40,10 @@ class RegisterUserUseCase
         // Create new user
         $user = $this->createUser($data);
 
-        // Send verification email
-        // TODO: Implement SendVerificationEmailJob
+        // Send verification email (only for non-social registrations with password)
+        if (!$this->isSocialLogin($data) && $data->password) {
+            $this->sendVerificationEmail($user);
+        }
 
         return ['is_new' => true, 'user' => $user];
     }
@@ -123,9 +128,24 @@ class RegisterUserUseCase
                 //     $user->phone_number_confirmed = true;
                 // }
             } catch (\Exception $e) {
-                $user->phone_number_confirmed = false;
-            }
+            $user->phone_number_confirmed = false;
         }
     }
-}
 
+    private function sendVerificationEmail(User $user): void
+    {
+        // Generate verification token
+        $token = Crypt::encryptString($user->email . '|' . now()->toIso8601String());
+
+        $user->password_reset_token = $token;
+        $user->save();
+
+        // Generate verification URL
+        $verificationUrl = config('app.frontend_url') . '/verify-account?token=' . urlencode($token);
+
+        // Send email
+        Mail::to($user->email)->send(
+            new VerificationMail($user->name, $verificationUrl)
+        );
+    }
+}
