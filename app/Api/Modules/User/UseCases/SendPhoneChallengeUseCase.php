@@ -4,12 +4,14 @@ namespace App\Api\Modules\User\UseCases;
 
 use App\Api\Modules\User\Data\UserChallengeData;
 use App\Api\Modules\User\Repositories\UsersRepository;
+use App\Api\Support\Contracts\SmsServiceInterface;
 use Illuminate\Support\Facades\Crypt;
 
 class SendPhoneChallengeUseCase
 {
     public function __construct(
-        private UsersRepository $repository
+        private UsersRepository $repository,
+        private SmsServiceInterface $smsService
     ) {}
 
     public function execute(UserChallengeData $data): array
@@ -33,13 +35,19 @@ class SendPhoneChallengeUseCase
             $user->save();
         }
 
-        // Send SMS
+        // Format phone number
+        $formattedPhone = $this->smsService->formatPhoneNumber(
+            $data->phoneNumber,
+            $data->phoneNumberCountryCode ?? '55'
+        );
+
+        // Prepare message
         $message = $data->type === 1 ?
             "ForeverPet: utilize o codigo {$code} para verificar seu telefone. " . ($data->appHash ?? '') :
             "ForeverPet: utilize o codigo {$code} para autorizar seu acesso. " . ($data->appHash ?? '');
 
-        // TODO: Integrate with SMS service
-        // $this->smsService->send($data->phoneNumberCountryCode ?? '55', $data->phoneNumber, $message);
+        // Send SMS
+        $this->smsService->send($formattedPhone, $message);
 
         // Encrypt challenge
         $challenge = Crypt::encryptString(

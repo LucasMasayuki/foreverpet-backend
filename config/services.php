@@ -35,4 +35,21 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Service Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'), // 'log' or 'twilio'
+    ],
+
+    'twilio' => [
+        'enabled' => env('TWILIO_ENABLED', false),
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'from_number' => env('TWILIO_FROM_NUMBER'),
+    ],
+
 ];
