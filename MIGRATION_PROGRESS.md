@@ -1,8 +1,8 @@
 # Progresso da Migração C# → Laravel
 
 **Data Início**: 24/10/2025
-**Data Atualização**: 24/10/2025
-**Status**: 🚧 **EM ANDAMENTO** - Migrations + Arquitetura de Autenticação
+**Data Atualização**: 28/10/2025
+**Status**: 🚀 **EM ANDAMENTO** - Migrations + Models + UsersController Migrado!
 
 ## ✅ COMPLETADO - 100%
 
@@ -180,6 +180,69 @@
 7. **Resources** - Criar API Resources para serialização
 8. **Validation** - Implementar Form Requests para validação
 
+---
+
+## 🎉 **Migração de Controllers** - 1/X Completo
+
+### ✅ UsersController → User Module (95% - COMPLETO!)
+
+**Status**: Migração concluída com sucesso!
+
+#### Estrutura Criada:
+- ✅ **11 Data DTOs** - Validação completa (UserRegisterData, UserUpdateData, etc)
+- ✅ **15 UseCases** - Toda lógica de negócio implementada
+- ✅ **2 Controllers** - UserAuthController + UserProfileController
+- ✅ **3 Resources** - Serialização de dados (UserProfileResource, UserBasicResource)
+- ✅ **1 Repository** - UsersRepository estendido com 5 novos métodos
+- ✅ **18 Rotas** - 10 públicas + 8 autenticadas
+
+#### Funcionalidades Implementadas:
+- ✅ Registro com social login (Facebook, Google, Apple, Twitter)
+- ✅ Sistema de challenges (SMS + Email)
+- ✅ Reset de senha seguro
+- ✅ Verificação de telefone com bloqueio
+- ✅ Device management com GPS tracking
+- ✅ QR Code login
+- ✅ Aceitar termos e privacidade
+
+#### Integrações Pendentes (5%):
+- ⏳ JWT Token generation (Sanctum)
+- ⏳ SMS Service integration
+- ⏳ Email templates
+- ⏳ S3 Signed URLs
+
+📄 **Documentação**: `USER_MODULE_COMPLETED.md` + `app/Api/Modules/User/MIGRATION_STATUS.md`
+
+#### Endpoints Criados:
+
+**Públicos:**
+```
+POST   /rest/token                        # Login
+PUT    /rest/Users                        # Registro
+POST   /rest/Users/Check                  # Verificar usuário
+POST   /rest/Users/ResetPassword          # Reset senha
+POST   /rest/Users/CreatePassword         # Criar senha
+GET    /rest/Users/VerifyAccount/{token}  # Verificar conta
+POST   /rest/Users/Challenge/Phone        # SMS challenge
+POST   /rest/Users/Challenge/Email        # Email challenge
+POST   /rest/Users/Challenge/Validate     # Validar challenge
+GET    /rest/Users/Ping                   # Health check
+```
+
+**Autenticados:**
+```
+GET    /rest/Users              # Perfil
+POST   /rest/Users              # Atualizar perfil
+POST   /rest/Users/ChangePassword         # Alterar senha
+POST   /rest/Users/PhoneNumber            # Atualizar telefone
+POST   /rest/Users/QRCode/Scan            # QR Code
+POST   /rest/Users/Devices                # Dispositivos
+POST   /rest/Users/AcceptTermsAndPrivacy  # Aceitar termos
+POST   /rest/Users/CreateSignedUploadUrl  # S3 upload
+```
+
+---
+
 ## 📝 Notas Técnicas
 
 ### Decisões de Design
@@ -203,5 +266,26 @@
 
 ---
 
-**Última Atualização**: 24/10/2025 07:30 UTC
+---
+
+## 🎯 Próximos Passos Prioritários
+
+### Imediato
+1. **Configurar Sanctum** - Para autenticação JWT dos endpoints User
+2. **Integrar SMS Service** - Para verificação de telefone
+3. **Configurar Email Templates** - Para reset de senha e verificação
+
+### Médio Prazo
+1. **Migrar próximo controller** - PetsController, VetsController, etc
+2. **Criar Factories** - Para testes automatizados
+3. **Criar Seeders** - Para dados mestres (vacinas, espécies, etc)
+
+### Longo Prazo
+1. **Testes Automatizados** - Unit + Integration tests
+2. **Documentação OpenAPI** - Swagger/Redoc
+3. **CI/CD Pipeline** - Automação de deploy
+
+---
+
+**Última Atualização**: 28/10/2025 17:00 UTC
 

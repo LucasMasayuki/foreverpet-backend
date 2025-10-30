@@ -79,5 +79,91 @@ class UsersRepository extends BaseRepository implements RepositoryContract
 
         return $user->delete();
     }
+
+    // New methods for authentication and user management
+
+    /**
+     * Find user by email
+     */
+    public function findByEmail(string $email): ?User
+    {
+        return $this->query()
+            ->where('email', strtolower($email))
+            ->whereNotIn('status', [2, 3]) // OptedOut, Removed
+            ->first();
+    }
+
+    /**
+     * Find user by social login or email
+     */
+    public function findBySocialOrEmail($data): ?User
+    {
+        return $this->query()
+            ->where(function (Builder $query) use ($data) {
+                $query->where('email', strtolower($data->email));
+
+                if (!empty($data->facebookId)) {
+                    $query->orWhere('facebook_id', $data->facebookId);
+                }
+                if (!empty($data->googleId)) {
+                    $query->orWhere('google_id', $data->googleId);
+                }
+                if (!empty($data->appleId)) {
+                    $query->orWhere('apple_id', $data->appleId);
+                }
+                if (!empty($data->twitterId)) {
+                    $query->orWhere('twitter_id', $data->twitterId);
+                }
+            })
+            ->whereNotIn('status', [2, 3]) // OptedOut, Removed
+            ->first();
+    }
+
+    /**
+     * Check if email already exists
+     */
+    public function emailExists(string $email): bool
+    {
+        return $this->query()
+            ->where('email', strtolower($email))
+            ->whereNotIn('status', [2, 3])
+            ->exists();
+    }
+
+    /**
+     * Find user by phone number
+     */
+    public function findByPhoneNumber(string $phoneNumber, ?string $countryCode = null): ?User
+    {
+        $cleanPhone = str_replace([' ', '(', ')', '-'], '', $phoneNumber);
+
+        return $this->query()
+            ->whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '(', ''), ')', ''), '-', '') = ?", [$cleanPhone])
+            ->when($countryCode, function (Builder $query, $code) {
+                $query->where(function (Builder $q) use ($code) {
+                    $q->where('phone_number_country_code', $code)
+                      ->orWhereNull('phone_number_country_code');
+                });
+            })
+            ->whereNotIn('status', [2, 3])
+            ->orderBy('last_visit_at', 'desc')
+            ->first();
+    }
+
+    /**
+     * Check if phone is blocked
+     */
+    public function isPhoneBlocked(string $phoneNumber, ?string $countryCode = null): bool
+    {
+        $cleanPhone = str_replace([' ', '(', ')', '-'], '', $phoneNumber);
+
+        return $this->query()
+            ->where('block_phone', true)
+            ->whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '(', ''), ')', ''), '-', '') = ?", [$cleanPhone])
+            ->when($countryCode, function (Builder $query, $code) {
+                $query->where('phone_number_country_code', $code);
+            })
+            ->exists();
+    }
 }
 
